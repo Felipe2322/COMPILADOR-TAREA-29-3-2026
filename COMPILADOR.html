@@ -1,0 +1,834 @@
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FELIX COMPILADOR</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f9;
+      color: #1f2937;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1400px;
+      margin: 20px auto;
+    }
+
+    .header {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 18px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #111827;
+    }
+
+    .header p {
+      margin: 6px 0 0;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel-title {
+      font-size: 17px;
+      font-weight: bold;
+      margin: 0;
+      color: #111827;
+    }
+
+    .panel-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #111827;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: #f3f4f6;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .editor-wrap {
+      display: grid;
+      grid-template-columns: 55px 1fr;
+      min-height: 500px;
+    }
+
+    .line-numbers {
+      background: #f9fafb;
+      border-right: 1px solid #e5e7eb;
+      color: #6b7280;
+      text-align: right;
+      padding: 14px 8px 14px 0;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 14px;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      background: #ffffff;
+      color: #111827;
+    }
+
+    .editor-footer {
+      border-top: 1px solid #e5e7eb;
+      padding: 10px 16px;
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: #fafafa;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fafafa;
+    }
+
+    .metric {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #ffffff;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .preview-section {
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .preview-box {
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #ffffff;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 16px;
+    }
+
+    #svgContainer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #svgContainer svg {
+      max-width: 100%;
+      max-height: 100%;
+      border: 1px solid #d1d5db;
+      background: white;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 14px 16px 0;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      border-radius: 6px;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      color: #374151;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .tab-btn.active {
+      background: #e5e7eb;
+      color: #111827;
+      font-weight: bold;
+    }
+
+    .tab-content {
+      display: none;
+      margin: 12px 16px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 14px;
+      min-height: 230px;
+      max-height: 360px;
+      overflow: auto;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #111827;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .empty-state {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>FELIX COMPILADOR</h1>
+      <p>Compilador pequeño con análisis léxico, sintáctico, semántico, código intermedio y generación de SVG.</p>
+    </div>
+
+    <div class="layout">
+      <!-- PANEL IZQUIERDO -->
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Editor de código fuente</div>
+            <div class="panel-subtitle">Instrucciones soportadas: PAPER, PEN, LINE. También admite comentarios con #.</div>
+          </div>
+          <div class="toolbar">
+            <button class="btn-primary" id="compileBtn">Compilar</button>
+            <button id="exampleBtn">Cargar ejemplo</button>
+            <button id="clearBtn">Limpiar</button>
+            <button id="downloadSourceBtn">Descargar código</button>
+          </div>
+        </div>
+
+        <div class="editor-wrap">
+          <div class="line-numbers" id="lineNumbers">1</div>
+          <textarea id="source" spellcheck="false"></textarea>
+        </div>
+
+        <div class="editor-footer">
+          <span>Use Ctrl + Enter para compilar rápidamente.</span>
+          <span id="editorStats">0 líneas · 0 caracteres</span>
+        </div>
+      </section>
+
+      <!-- PANEL DERECHO -->
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Resultados de compilación</div>
+            <div class="panel-subtitle">Vista previa del dibujo, métricas y detalles internos del compilador.</div>
+          </div>
+          <div class="toolbar">
+            <button id="downloadSvgBtn">Descargar SVG</button>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">Estado</div>
+            <div class="metric-value" id="metricStatus">Esperando</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Tokens</div>
+            <div class="metric-value" id="metricTokens">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Instrucciones</div>
+            <div class="metric-value" id="metricInstructions">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Advertencias</div>
+            <div class="metric-value" id="metricWarnings">0</div>
+          </div>
+        </div>
+
+        <div class="preview-section">
+          <div class="preview-box">
+            <div id="svgContainer">
+              <span class="empty-state">Aquí aparecerá la salida SVG generada por el compilador.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="tokensTab">Tokens</button>
+          <button class="tab-btn" data-tab="astTab">AST / IR</button>
+          <button class="tab-btn" data-tab="symbolsTab">Símbolos</button>
+          <button class="tab-btn" data-tab="svgTab">SVG</button>
+          <button class="tab-btn" data-tab="logTab">Mensajes</button>
+        </div>
+
+        <div id="tokensTab" class="tab-content active"></div>
+        <div id="astTab" class="tab-content"></div>
+        <div id="symbolsTab" class="tab-content"></div>
+        <div id="svgTab" class="tab-content"></div>
+        <div id="logTab" class="tab-content"></div>
+      </section>
+    </div>
+
+    <div class="footer-note">
+      MiniDraw Compiler · Interfaz académica clara para presentación universitaria.
+    </div>
+  </div>
+
+  <script>
+    let lastSVG = "";
+
+    function qs(id) {
+      return document.getElementById(id);
+    }
+
+    function clearOutputs() {
+      ["tokensTab", "astTab", "symbolsTab", "svgTab", "logTab"].forEach(id => {
+        qs(id).textContent = "";
+      });
+
+      qs("svgContainer").innerHTML =
+        '<span class="empty-state">Aquí aparecerá la salida SVG generada por el compilador.</span>';
+
+      lastSVG = "";
+      qs("metricStatus").textContent = "Esperando";
+      qs("metricTokens").textContent = "0";
+      qs("metricInstructions").textContent = "0";
+      qs("metricWarnings").textContent = "0";
+    }
+
+    function addLog(message, type = "info") {
+      const prefix =
+        type === "error" ? "[ERROR] " :
+        type === "warning" ? "[ADVERTENCIA] " :
+        "[INFO] ";
+
+      qs("logTab").textContent += prefix + message + "\n";
+    }
+
+    function updateEditorInfo() {
+      const text = qs("source").value;
+      const lines = text.split("\n").length;
+      const chars = text.length;
+
+      qs("editorStats").textContent = `${lines} líneas · ${chars} caracteres`;
+
+      let nums = "";
+      for (let i = 1; i <= lines; i++) {
+        nums += i + "\n";
+      }
+      qs("lineNumbers").textContent = nums.trimEnd() || "1";
+    }
+
+    function syncScroll() {
+      qs("lineNumbers").scrollTop = qs("source").scrollTop;
+    }
+
+    function downloadFile(name, content, type = "text/plain") {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderTokens(tokens) {
+      qs("tokensTab").textContent = tokens.length
+        ? tokens.map(t => `${t.type}("${t.value}") -> línea ${t.line}, columna ${t.col}`).join("\n")
+        : "(Sin tokens)";
+    }
+
+    function renderASTandIR(ast, ir) {
+      qs("astTab").textContent =
+        "AST:\n" + JSON.stringify(ast, null, 2) +
+        "\n\nIR:\n" + JSON.stringify(ir, null, 2);
+    }
+
+    function renderSymbols(symbols) {
+      qs("symbolsTab").textContent = JSON.stringify(symbols, null, 2);
+    }
+
+    function renderSVG(svg) {
+      qs("svgContainer").innerHTML = svg;
+      qs("svgTab").textContent = svg;
+      lastSVG = svg;
+    }
+
+    function removeComment(line) {
+      const idx = line.indexOf("#");
+      return idx >= 0 ? line.slice(0, idx) : line;
+    }
+
+    function tokenize(source) {
+      const tokens = [];
+      const lines = source.split(/\r?\n/);
+      const KEYWORDS = ["PAPER", "PEN", "LINE"];
+      const NUMBER = /^\d+$/;
+
+      for (let i = 0; i < lines.length; i++) {
+        const cleanLine = removeComment(lines[i]);
+        const trimmed = cleanLine.trim();
+
+        if (!trimmed) continue;
+
+        const parts = trimmed.split(/\s+/);
+        let searchStart = 0;
+
+        for (const part of parts) {
+          const col = cleanLine.indexOf(part, searchStart) + 1;
+          searchStart = col - 1 + part.length;
+
+          let type = "";
+          if (KEYWORDS.includes(part.toUpperCase())) {
+            type = part.toUpperCase();
+          } else if (NUMBER.test(part)) {
+            type = "NUMBER";
+          } else {
+            throw new Error(`Token inválido "${part}" en línea ${i + 1}`);
+          }
+
+          tokens.push({
+            type,
+            value: part,
+            line: i + 1,
+            col
+          });
+        }
+      }
+
+      tokens.push({
+        type: "EOF",
+        value: "",
+        line: lines.length,
+        col: 1
+      });
+
+      return tokens;
+    }
+
+    class Parser {
+      constructor(tokens) {
+        this.tokens = tokens;
+        this.pos = 0;
+        this.warnings = [];
+        this.ast = {
+          type: "Program",
+          body: []
+        };
+        this.symbols = {
+          canvas: {
+            declared: false,
+            size: null
+          },
+          pen: {
+            declared: false,
+            color: null
+          },
+          totalInstructions: 0,
+          totalLines: 0
+        };
+      }
+
+      current() {
+        return this.tokens[this.pos] || null;
+      }
+
+      peekType() {
+        return this.current() ? this.current().type : null;
+      }
+
+      advance() {
+        this.pos++;
+      }
+
+      consume(expectedType) {
+        const token = this.current();
+
+        if (!token) {
+          throw new Error("Fin inesperado de entrada.");
+        }
+
+        if (token.type !== expectedType) {
+          throw new Error(`Se esperaba ${expectedType} pero se encontró ${token.type} en línea ${token.line}`);
+        }
+
+        this.advance();
+        return token;
+      }
+
+      consumeNumber() {
+        const tok = this.consume("NUMBER");
+        return {
+          value: parseInt(tok.value, 10),
+          line: tok.line
+        };
+      }
+
+      parseProgram() {
+        while (this.peekType() !== "EOF") {
+          this.ast.body.push(this.parseCommand());
+        }
+
+        this.symbols.totalInstructions = this.ast.body.length;
+        this.symbols.totalLines = new Set(this.ast.body.map(n => n.line)).size;
+
+        return {
+          ast: this.ast,
+          symbols: this.symbols,
+          warnings: this.warnings
+        };
+      }
+
+      parseCommand() {
+        const token = this.current();
+
+        switch (token.type) {
+          case "PAPER":
+            return this.parsePaper();
+          case "PEN":
+            return this.parsePen();
+          case "LINE":
+            return this.parseLine();
+          default:
+            throw new Error(`Instrucción desconocida "${token.value}" en línea ${token.line}`);
+        }
+      }
+
+      parsePaper() {
+        const kw = this.consume("PAPER");
+        const size = this.consumeNumber().value;
+
+        if (size <= 0) {
+          throw new Error(`El valor de PAPER debe ser mayor que 0 en línea ${kw.line}`);
+        }
+
+        this.symbols.canvas.declared = true;
+        this.symbols.canvas.size = size;
+
+        return {
+          type: "PaperStmt",
+          line: kw.line,
+          size
+        };
+      }
+
+      parsePen() {
+        const kw = this.consume("PEN");
+        const r = this.consumeNumber().value;
+        const g = this.consumeNumber().value;
+        const b = this.consumeNumber().value;
+
+        [r, g, b].forEach(v => {
+          if (v < 0 || v > 255) {
+            throw new Error(`Los valores de PEN deben estar entre 0 y 255 en línea ${kw.line}`);
+          }
+        });
+
+        this.symbols.pen.declared = true;
+        this.symbols.pen.color = { r, g, b };
+
+        return {
+          type: "PenStmt",
+          line: kw.line,
+          r, g, b
+        };
+      }
+
+      parseLine() {
+        const kw = this.consume("LINE");
+        const x1 = this.consumeNumber().value;
+        const y1 = this.consumeNumber().value;
+        const x2 = this.consumeNumber().value;
+        const y2 = this.consumeNumber().value;
+
+        if (!this.symbols.canvas.declared) {
+          this.warnings.push(`No se definió PAPER antes de LINE en línea ${kw.line}. Se usará tamaño por defecto 100.`);
+          this.symbols.canvas.declared = true;
+          this.symbols.canvas.size = 100;
+        }
+
+        if (!this.symbols.pen.declared) {
+          this.warnings.push(`No se definió PEN antes de LINE en línea ${kw.line}. Se usará color blanco por defecto.`);
+          this.symbols.pen.declared = true;
+          this.symbols.pen.color = { r: 255, g: 255, b: 255 };
+        }
+
+        const size = this.symbols.canvas.size;
+        [x1, y1, x2, y2].forEach(v => {
+          if (v < 0 || v > size) {
+            throw new Error(`Coordenada fuera del lienzo en línea ${kw.line}. Valor: ${v}, rango: 0 a ${size}`);
+          }
+        });
+
+        return {
+          type: "LineStmt",
+          line: kw.line,
+          x1, y1, x2, y2
+        };
+      }
+    }
+
+    function buildIR(ast) {
+      const ir = [];
+
+      for (const node of ast.body) {
+        if (node.type === "PaperStmt") {
+          ir.push({ op: "SET_PAPER", size: node.size, line: node.line });
+        } else if (node.type === "PenStmt") {
+          ir.push({ op: "SET_PEN", r: node.r, g: node.g, b: node.b, line: node.line });
+        } else if (node.type === "LineStmt") {
+          ir.push({ op: "DRAW_LINE", x1: node.x1, y1: node.y1, x2: node.x2, y2: node.y2, line: node.line });
+        }
+      }
+
+      return ir;
+    }
+
+    function generateSVG(ir, defaultPaper = 100, defaultPen = { r: 255, g: 255, b: 255 }) {
+      let paperSize = defaultPaper;
+      let pen = { ...defaultPen };
+      const lineObjects = [];
+
+      for (const instr of ir) {
+        if (instr.op === "SET_PAPER") {
+          paperSize = instr.size;
+        } else if (instr.op === "SET_PEN") {
+          pen = { r: instr.r, g: instr.g, b: instr.b };
+        } else if (instr.op === "DRAW_LINE") {
+          lineObjects.push({
+            x1: instr.x1,
+            y1: instr.y1,
+            x2: instr.x2,
+            y2: instr.y2,
+            color: { ...pen }
+          });
+        }
+      }
+
+      let svg = `<svg width="${paperSize}" height="${paperSize}" viewBox="0 0 ${paperSize} ${paperSize}" xmlns="http://www.w3.org/2000/svg">\n`;
+      svg += `  <rect x="0" y="0" width="${paperSize}" height="${paperSize}" fill="black" />\n`;
+
+      for (const line of lineObjects) {
+        svg += `  <line x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}" stroke="rgb(${line.color.r},${line.color.g},${line.color.b})" stroke-width="2" />\n`;
+      }
+
+      svg += `</svg>`;
+      return svg;
+    }
+
+    function compileSource() {
+      clearOutputs();
+      qs("metricStatus").textContent = "Compilando";
+      addLog("Iniciando compilación...");
+
+      try {
+        const source = qs("source").value;
+        const tokens = tokenize(source);
+        const visibleTokens = tokens.filter(t => t.type !== "EOF");
+
+        renderTokens(visibleTokens);
+        addLog("Análisis léxico completado.");
+
+        const parser = new Parser(tokens);
+        const result = parser.parseProgram();
+
+        addLog("Análisis sintáctico completado.");
+        addLog("Validación semántica completada.");
+
+        result.warnings.forEach(w => addLog(w, "warning"));
+
+        const ir = buildIR(result.ast);
+        renderASTandIR(result.ast, ir);
+        renderSymbols(result.symbols);
+
+        addLog("Código intermedio generado.");
+
+        const svg = generateSVG(
+          ir,
+          result.symbols.canvas.size || 100,
+          result.symbols.pen.color || { r: 255, g: 255, b: 255 }
+        );
+
+        renderSVG(svg);
+
+        addLog("SVG generado correctamente.");
+        addLog("Compilación finalizada con éxito.");
+
+        qs("metricStatus").textContent = "Exitosa";
+        qs("metricTokens").textContent = visibleTokens.length;
+        qs("metricInstructions").textContent = result.symbols.totalInstructions;
+        qs("metricWarnings").textContent = result.warnings.length;
+      } catch (error) {
+        addLog(error.message, "error");
+        qs("metricStatus").textContent = "Fallida";
+      }
+    }
+
+    function loadExample() {
+      qs("source").value =
+`# Ejemplo MiniDraw
+PAPER 120
+PEN 255 255 255
+LINE 10 100 60 20
+LINE 60 20 110 100
+PEN 0 0 255
+LINE 20 85 100 85`;
+
+      updateEditorInfo();
+      clearOutputs();
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+
+        btn.classList.add("active");
+        qs(btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    qs("compileBtn").addEventListener("click", compileSource);
+    qs("exampleBtn").addEventListener("click", loadExample);
+
+    qs("clearBtn").addEventListener("click", () => {
+      qs("source").value = "";
+      updateEditorInfo();
+      clearOutputs();
+    });
+
+    qs("downloadSourceBtn").addEventListener("click", () => {
+      downloadFile("programa_minidraw.txt", qs("source").value || "", "text/plain");
+    });
+
+    qs("downloadSvgBtn").addEventListener("click", () => {
+      if (!lastSVG) {
+        alert("Primero compile un programa para generar el SVG.");
+        return;
+      }
+      downloadFile("salida.svg", lastSVG, "image/svg+xml");
+    });
+
+    qs("source").addEventListener("input", updateEditorInfo);
+    qs("source").addEventListener("scroll", syncScroll);
+    qs("source").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && e.ctrlKey) {
+        e.preventDefault();
+        compileSource();
+      }
+    });
+
+    loadExample();
+  </script>
+</body>
+</html>
